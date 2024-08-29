@@ -87,6 +87,21 @@ static void Parser(char *request, char *response)
     Device.DO = strtol(arg1, NULL, 16);
     strcpy(response, "OK");
   }
+  /*--------------------------------------------------------------------------*/
+  /*--------------------- MRLY240314.FW --------------------------------------*/
+  /*--------------------------------------------------------------------------*/
+  else if(!strcmp(cmd,"RLY:SET")){
+    sscanf(request, "%s %s",cmd, arg1);
+    uint16_t index = strtol(arg1, NULL, 16);
+    TPICs_Set(index);
+    strcpy(response, "OK");
+  }
+  else if(!strcmp(cmd,"RLY:CLR")){
+    sscanf(request, "%s %s",cmd, arg1);
+    uint16_t index = strtol(arg1, NULL, 16);
+    TPICs_Clr(index);
+    strcpy(response, "OK");
+  }
 
   else{
     Device.Diag.UartUnknwonCnt++;

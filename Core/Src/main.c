@@ -81,6 +81,11 @@ void LiveLedOn(void);
 // ---Tools ---
 void UpTimeTask(void);
 
+// --- Buttons ---
+bool GetBtn1(void);
+bool GetBtn2(void);
+bool GetBtn3(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -132,6 +137,8 @@ int main(void)
   printf(VT100_ATTR_RESET);
 
 
+  HAL_Delay(1000); //Wait for FPGA
+
   // --- Flash/F-RAM ---
   FM25_Init(&hspi2);
   //FM25_UnitTest();
@@ -181,6 +188,49 @@ int main(void)
 
   //--- Communication ---
   UartCom_Init(&huart1, &hdma_usart1_rx);
+
+/*
+  // --- TPIC Relay drivers ---
+  TPICs_Init(&hspi2);
+  TPICs_FpgaBypassOn();
+
+  if(TPICs_ChainCheckIsPassed() == false)
+  {
+    DisplayClear();
+    DisplayUpdate();
+
+    DisplaySetCursor(0, 0);
+    DisplayDrawString("Chain: FAILED ", &GfxFont7x8, SSD1306_WHITE );
+    DisplaySetCursor(0, 8);
+    DisplayDrawString("Press S1", &GfxFont7x8, SSD1306_WHITE);
+    DisplayUpdate();
+
+    do
+    {
+
+    }while(GetBtn1() != true);
+  }
+
+
+  //TPICs_TestPattern_1();
+  TPICs_Set(431);
+  TPICs_Set(430);
+  TPICs_Set(429);
+  TPICs_Set(428);
+
+  TPICs_Clr(431);
+  TPICs_Clr(430);
+  TPICs_Clr(429);
+  TPICs_Clr(428);
+
+
+*/
+
+  TPICs_FpgaBypassOff();
+  // --- FPGA ---
+  FPGA_Init(&hspi2);
+
+
 
   /*
 #ifdef DEBUG
@@ -342,7 +392,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -602,6 +652,27 @@ int _write(int file, char *ptr, int len)
     ITM_SendChar((*ptr++));
   return len;
 }
+
+
+/* Buttons--------------------------------------------------------------------*/
+bool GetBtn1(void)
+{
+  uint8_t temp = HAL_GPIO_ReadPin(BTN1_GPIO_Port, BTN1_Pin);
+  return  temp == GPIO_PIN_RESET;
+}
+
+bool GetBtn2(void)
+{
+  uint8_t temp = HAL_GPIO_ReadPin(BTN2_GPIO_Port, BTN2_Pin);
+  return  temp == GPIO_PIN_RESET;
+}
+
+bool GetBtn3(void)
+{
+  uint8_t temp = HAL_GPIO_ReadPin(BTN3_GPIO_Port, BTN3_Pin);
+  return  temp == GPIO_PIN_RESET;
+}
+
 /* USER CODE END 4 */
 
 /**

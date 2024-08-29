@@ -31,6 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
 
 /* USER CODE END Includes */
 
@@ -113,6 +114,9 @@ typedef struct _Devic_t
 #define EEPROM_ADDR_FIRST_START  0x0000
 #define EEPROM_ADDR_BOOTUP_CNT   0x0004
 
+
+#define TPIC_COUNT              54
+
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -120,15 +124,26 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
-// --- Relays ---
-uint8_t Relays_Init(SPI_HandleTypeDef *spi);
-void Relays_AllOn(void);
-void Relays_AllOff(void);
-void Relays_Update(void);
-
 // --- UART COM ---
 void UartCom_Init(UART_HandleTypeDef *uart, DMA_HandleTypeDef *dma);
 void UartCom_Task(void);
+
+
+
+// --- TPIC Relay drivers  ---
+void TPICs_Init(SPI_HandleTypeDef *hspi);
+bool TPICs_ChainCheckIsPassed(void);
+void TPICs_FpgaBypassOff(void);
+void TPICs_FpgaBypassOn(void);
+void TPICs_Set(uint16_t index);
+void TPICs_Clr(uint16_t index);
+void TPICs_TestPattern_1(void);
+
+
+// --- FPGA ---
+void FPGA_Init(SPI_HandleTypeDef *hspi);
+uint8_t FPGA_ReadU8(uint8_t inst, uint16_t address);
+
 
 /* USER CODE END EFP */
 
@@ -155,6 +170,8 @@ void UartCom_Task(void);
 #define DIAG_G_N_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+
+
 
 /* USER CODE END Private defines */
 
