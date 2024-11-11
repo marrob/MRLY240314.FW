@@ -26,7 +26,6 @@
 #include "display.h"
 #include <stdio.h>
 #include "string.h"
-#include "fm25.h"
 #include "mcp3421.h"
 
 /* USER CODE END Includes */
@@ -81,10 +80,13 @@ void LiveLedOn(void);
 // ---Tools ---
 void UpTimeTask(void);
 
-// --- Buttons ---
-bool GetBtn1(void);
-bool GetBtn2(void);
-bool GetBtn3(void);
+// --- LEDs ---
+void Led5On(void);
+void Led5Off(void);
+void Led6On(void);
+void Led6Off(void);
+void Led7On(void);
+void Led7Off(void);
 
 /* USER CODE END PFP */
 
@@ -136,30 +138,12 @@ int main(void)
   printf(VT100_CURSORHOME);
   printf(VT100_ATTR_RESET);
 
-
   HAL_Delay(1000); //Wait for FPGA
 
-  // --- Flash/F-RAM ---
-  FM25_Init(&hspi2);
-  //FM25_UnitTest();
-
-  uint32_t startSign = 0;
-  FM25_Read(EEPROM_ADDR_FIRST_START, &startSign, sizeof(startSign));
-  if(startSign != 0xAA55)
-  {
-    // --- FIRST START ---
-    startSign = 0xAA55;
-    FM25_Write(EEPROM_ADDR_FIRST_START, &startSign, sizeof(uint32_t));
-    Device.Diag.BootupCnt = 0;
-    FM25_Write(EEPROM_ADDR_BOOTUP_CNT, &Device.Diag.BootupCnt, sizeof(uint32_t));
-  }
-
-  // --- BOOTUP COUNTER ---
-  FM25_Read(EEPROM_ADDR_BOOTUP_CNT, &Device.Diag.BootupCnt, sizeof(uint32_t));
-  Device.Diag.BootupCnt++;
-  FM25_Write(EEPROM_ADDR_BOOTUP_CNT, &Device.Diag.BootupCnt, sizeof(uint32_t));
-
-  printf("Hello World\r\n");
+  // --- LEDs ---
+  Led5Off();
+  Led6Off();
+  Led7Off();
 
   // --- LiveLed ---
   hLiveLed.LedOffFnPtr = &LiveLedOff;
@@ -189,27 +173,28 @@ int main(void)
   //--- Communication ---
   UartCom_Init(&huart1, &hdma_usart1_rx);
 
-/*
+
   // --- TPIC Relay drivers ---
   TPICs_Init(&hspi2);
   TPICs_FpgaBypassOn();
 
+  DisplayClear();
+  DisplayUpdate();
   if(TPICs_ChainCheckIsPassed() == false)
   {
-    DisplayClear();
-    DisplayUpdate();
-
     DisplaySetCursor(0, 0);
     DisplayDrawString("Chain: FAILED ", &GfxFont7x8, SSD1306_WHITE );
-    DisplaySetCursor(0, 8);
-    DisplayDrawString("Press S1", &GfxFont7x8, SSD1306_WHITE);
     DisplayUpdate();
-
-    do
-    {
-
-    }while(GetBtn1() != true);
+    Led5Off();
   }
+  else
+  {
+    DisplaySetCursor(0, 0);
+    DisplayDrawString("Chain: PASSED ", &GfxFont7x8, SSD1306_WHITE );
+    DisplayUpdate();
+    Led5On();
+  }
+  HAL_Delay(2000);
 
 
   //TPICs_TestPattern_1();
@@ -223,12 +208,9 @@ int main(void)
   TPICs_Clr(429);
   TPICs_Clr(428);
 
-
-*/
-
   TPICs_FpgaBypassOff();
   // --- FPGA ---
-  FPGA_Init(&hspi2);
+ // FPGA_Init(&hspi2);
 
 
 
@@ -517,7 +499,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 57600;
+  huart1.Init.BaudRate = 19200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -567,22 +549,29 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LIVE_LED_Pin|DIAG_RCK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED5_Pin|LED6_Pin|DAIG_BYPS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, LED7_Pin|LIVE_LED_Pin|DAIG_RESET_Pin|DIAG_RCK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, DIAG_CS_N_Pin|DIAG_G_N_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(FM25_CS_N_GPIO_Port, FM25_CS_N_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DAIG_BYPS_GPIO_Port, DAIG_BYPS_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : BTN3_Pin BTN2_Pin BTN1_Pin */
-  GPIO_InitStruct.Pin = BTN3_Pin|BTN2_Pin|BTN1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pins : LED5_Pin LED6_Pin DAIG_BYPS_Pin */
+  GPIO_InitStruct.Pin = LED5_Pin|LED6_Pin|DAIG_BYPS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LED7_Pin DIAG_CS_N_Pin DAIG_RESET_Pin DIAG_RCK_Pin
+                           DIAG_G_N_Pin */
+  GPIO_InitStruct.Pin = LED7_Pin|DIAG_CS_N_Pin|DAIG_RESET_Pin|DIAG_RCK_Pin
+                          |DIAG_G_N_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LIVE_LED_Pin */
   GPIO_InitStruct.Pin = LIVE_LED_Pin;
@@ -596,27 +585,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(LVL_CMP_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : DIAG_CS_N_Pin DIAG_RCK_Pin DIAG_G_N_Pin */
-  GPIO_InitStruct.Pin = DIAG_CS_N_Pin|DIAG_RCK_Pin|DIAG_G_N_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : FM25_CS_N_Pin */
-  GPIO_InitStruct.Pin = FM25_CS_N_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(FM25_CS_N_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : DAIG_BYPS_Pin */
-  GPIO_InitStruct.Pin = DAIG_BYPS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(DAIG_BYPS_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -643,6 +611,39 @@ void LiveLedOff(void)
 {
   HAL_GPIO_WritePin(LIVE_LED_GPIO_Port, LIVE_LED_Pin, GPIO_PIN_RESET);
 }
+
+
+void Led5On(void)
+{
+  HAL_GPIO_WritePin(LED5_GPIO_Port, LED5_Pin, GPIO_PIN_RESET);
+}
+
+void Led5Off(void)
+{
+  HAL_GPIO_WritePin(LED5_GPIO_Port, LED5_Pin, GPIO_PIN_SET);
+}
+
+void Led6On(void)
+{
+  HAL_GPIO_WritePin(LED6_GPIO_Port, LED6_Pin, GPIO_PIN_RESET);
+}
+
+void Led6Off(void)
+{
+  HAL_GPIO_WritePin(LED6_GPIO_Port, LED6_Pin, GPIO_PIN_SET);
+}
+
+void Led7On(void)
+{
+  HAL_GPIO_WritePin(LED7_GPIO_Port, LED7_Pin, GPIO_PIN_RESET);
+}
+
+void Led7Off(void)
+{
+  HAL_GPIO_WritePin(LED7_GPIO_Port, LED7_Pin, GPIO_PIN_SET);
+}
+
+
 /* printf --------------------------------------------------------------------*/
 int _write(int file, char *ptr, int len)
 {
@@ -653,25 +654,6 @@ int _write(int file, char *ptr, int len)
   return len;
 }
 
-
-/* Buttons--------------------------------------------------------------------*/
-bool GetBtn1(void)
-{
-  uint8_t temp = HAL_GPIO_ReadPin(BTN1_GPIO_Port, BTN1_Pin);
-  return  temp == GPIO_PIN_RESET;
-}
-
-bool GetBtn2(void)
-{
-  uint8_t temp = HAL_GPIO_ReadPin(BTN2_GPIO_Port, BTN2_Pin);
-  return  temp == GPIO_PIN_RESET;
-}
-
-bool GetBtn3(void)
-{
-  uint8_t temp = HAL_GPIO_ReadPin(BTN3_GPIO_Port, BTN3_Pin);
-  return  temp == GPIO_PIN_RESET;
-}
 
 /* USER CODE END 4 */
 
@@ -706,3 +688,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+

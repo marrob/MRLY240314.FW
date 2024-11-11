@@ -115,7 +115,7 @@ typedef struct _Devic_t
 #define EEPROM_ADDR_BOOTUP_CNT   0x0004
 
 
-#define TPIC_COUNT              54
+#define TPIC_COUNT              55
 
 /* USER CODE END EM */
 
@@ -148,22 +148,22 @@ uint8_t FPGA_ReadU8(uint8_t inst, uint16_t address);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BTN3_Pin GPIO_PIN_4
-#define BTN3_GPIO_Port GPIOA
-#define BTN2_Pin GPIO_PIN_5
-#define BTN2_GPIO_Port GPIOA
-#define BTN1_Pin GPIO_PIN_6
-#define BTN1_GPIO_Port GPIOA
+#define LED5_Pin GPIO_PIN_6
+#define LED5_GPIO_Port GPIOA
+#define LED6_Pin GPIO_PIN_7
+#define LED6_GPIO_Port GPIOA
+#define LED7_Pin GPIO_PIN_0
+#define LED7_GPIO_Port GPIOB
 #define LIVE_LED_Pin GPIO_PIN_1
 #define LIVE_LED_GPIO_Port GPIOB
 #define LVL_CMP_Pin GPIO_PIN_2
 #define LVL_CMP_GPIO_Port GPIOB
 #define DIAG_CS_N_Pin GPIO_PIN_12
 #define DIAG_CS_N_GPIO_Port GPIOB
-#define FM25_CS_N_Pin GPIO_PIN_8
-#define FM25_CS_N_GPIO_Port GPIOA
 #define DAIG_BYPS_Pin GPIO_PIN_15
 #define DAIG_BYPS_GPIO_Port GPIOA
+#define DAIG_RESET_Pin GPIO_PIN_5
+#define DAIG_RESET_GPIO_Port GPIOB
 #define DIAG_RCK_Pin GPIO_PIN_6
 #define DIAG_RCK_GPIO_Port GPIOB
 #define DIAG_G_N_Pin GPIO_PIN_7
