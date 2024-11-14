@@ -45,8 +45,6 @@ static void Parser(char *request, char *response)
 {
   char cmd[UART_CMD_LENGTH];
   char arg1[UART_ARG_LENGTH];
-  //char arg2[UART_ARG_LENGTH];
-
   sscanf(request, "%s", cmd);
 
   /*--------------------------------------------------------------------------*/
@@ -100,6 +98,40 @@ static void Parser(char *request, char *response)
     sscanf(request, "%s %s",cmd, arg1);
     uint16_t index = strtol(arg1, NULL, 16);
     TPICs_Clr(index);
+    strcpy(response, "OK");
+  }
+
+  else if(!strcmp(cmd,"REG?")){
+
+    uint8_t buffer[FPGA_TOTAL_REGISTERS];
+    FPGA_ReadReg(buffer, sizeof(buffer));
+    int offset = 0;
+    for(int i = 0; i < sizeof(buffer); i++)
+    {
+      sprintf(response + offset , "%02X", buffer[i]);
+      offset += 2;
+    }
+  }
+
+  else if(!strcmp(cmd,"CHAIN:CHECK?"))
+  {
+    TPICs_FpgaBypassOn();
+
+    if(TPICs_ChainCheckIsPassed())
+      sprintf(response, "PASSED");
+    else
+      sprintf(response, "FAILED");
+    TPICs_FpgaBypassOff();
+  }
+  else if(!strcmp(cmd,"CHAIN:SET"))
+  {
+    uint8_t byteArray[TPIC_COUNT];
+    sscanf(request, "%s %s",cmd, arg1);
+    uint8_t hexStringLength = strlen(arg1);
+    for (size_t i = 0; i < hexStringLength / 2 && i < TPIC_COUNT; i++)
+      sscanf(arg1 + 2 * i, "%2X", &byteArray[i]);
+
+    TPICs_ChainWrite(byteArray, TPIC_COUNT);
     strcpy(response, "OK");
   }
 

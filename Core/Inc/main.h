@@ -100,9 +100,9 @@ typedef struct _Devic_t
 #define DEVICE_MNF_SIZE         sizeof(DEVICE_MNF)
 
 /*--- UART COM ---*/
-#define UART_BUFFER_SIZE    64
+#define UART_BUFFER_SIZE    180
 #define UART_CMD_LENGTH     35
-#define UART_ARG_LENGTH     35
+#define UART_ARG_LENGTH     120
 #define UART_TERIMINATION_CHAR  '\r' //0x0D
 
 /*--- MCP3421 ---*/
@@ -110,12 +110,10 @@ typedef struct _Devic_t
 //MCP3421A1T-E/CH:0xD2
 #define MCP3421_I2C_DEVICE_ADDRESS  0xD2
 
-/*--- EEPROM MAP ---*/
-#define EEPROM_ADDR_FIRST_START  0x0000
-#define EEPROM_ADDR_BOOTUP_CNT   0x0004
 
 
-#define TPIC_COUNT              55
+#define FPGA_TOTAL_REGISTERS       59
+#define TPIC_COUNT                 55
 
 /* USER CODE END EM */
 
@@ -133,6 +131,7 @@ void UartCom_Task(void);
 // --- TPIC Relay drivers  ---
 void TPICs_Init(SPI_HandleTypeDef *hspi);
 bool TPICs_ChainCheckIsPassed(void);
+void TPICs_ChainWrite(uint8_t *buffer, size_t size);
 void TPICs_FpgaBypassOff(void);
 void TPICs_FpgaBypassOn(void);
 void TPICs_Set(uint16_t index);
@@ -143,7 +142,7 @@ void TPICs_TestPattern_1(void);
 // --- FPGA ---
 void FPGA_Init(SPI_HandleTypeDef *hspi);
 uint8_t FPGA_ReadU8(uint8_t inst, uint16_t address);
-
+void FPGA_ReadReg(uint8_t *buffer, size_t size);
 
 /* USER CODE END EFP */
 

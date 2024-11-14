@@ -180,6 +180,8 @@ int main(void)
 
   DisplayClear();
   DisplayUpdate();
+
+  /*
   if(TPICs_ChainCheckIsPassed() == false)
   {
     DisplaySetCursor(0, 0);
@@ -207,12 +209,12 @@ int main(void)
   TPICs_Clr(430);
   TPICs_Clr(429);
   TPICs_Clr(428);
+  */
+
+  // --- FPGA ---
+ FPGA_Init(&hspi2);
 
   TPICs_FpgaBypassOff();
-  // --- FPGA ---
- // FPGA_Init(&hspi2);
-
-
 
   /*
 #ifdef DEBUG
@@ -549,13 +551,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LED5_Pin|LED6_Pin|DAIG_BYPS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED5_Pin|LED6_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LED7_Pin|LIVE_LED_Pin|DAIG_RESET_Pin|DIAG_RCK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LED7_Pin|DIAG_CS_N_Pin|DIAG_G_N_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, DIAG_CS_N_Pin|DIAG_G_N_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, LIVE_LED_Pin|DAIG_RESET_Pin|DIAG_RCK_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DAIG_BYPS_GPIO_Port, DAIG_BYPS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : LED5_Pin LED6_Pin DAIG_BYPS_Pin */
   GPIO_InitStruct.Pin = LED5_Pin|LED6_Pin|DAIG_BYPS_Pin;
@@ -688,4 +693,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-

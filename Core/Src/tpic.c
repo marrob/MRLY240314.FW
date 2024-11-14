@@ -159,6 +159,12 @@ void TPICs_TestPattern_1(void)
   Update();
 }
 
+void TPICs_ChainWrite(uint8_t *buffer, size_t size)
+{
+  memcpy(_tpic_array , buffer, size);
+  Update();
+}
+
 void Update(void)
 {
   HAL_SPI_Transmit(_hspi, _tpic_array, TPIC_COUNT, 100);
