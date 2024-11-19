@@ -35,11 +35,18 @@ extern "C" {
 
 /* USER CODE END Includes */
 
+
+
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+#define STATUS_FPGA_BYPASS      0x00000001
+#define STATUS_CHAIN_PASSED    0x00000002
+
+
 typedef struct _Devic_t
 {
+  uint32_t Status;
   uint8_t DO;
   uint8_t DI;
   struct _Diag

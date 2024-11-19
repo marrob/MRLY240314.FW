@@ -17,7 +17,6 @@
 static SPI_HandleTypeDef *_hspi;
 
 /* Private function prototypes -----------------------------------------------*/
-void xxx(void);
 uint8_t Read(void);
 
 /* Private user code ---------------------------------------------------------*/

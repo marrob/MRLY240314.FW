@@ -85,9 +85,24 @@ static void Parser(char *request, char *response)
     Device.DO = strtol(arg1, NULL, 16);
     strcpy(response, "OK");
   }
+
   /*--------------------------------------------------------------------------*/
   /*--------------------- MRLY240314.FW --------------------------------------*/
   /*--------------------------------------------------------------------------*/
+  else if(!strcmp(cmd, "STA?"))
+  {
+    sprintf(response,"%08lX %08lX",Device.Diag.UpTimeSec, Device.Status);
+  }
+  else if(!strcmp(cmd,"BYPASS:ON"))
+  {
+    TPICs_FpgaBypassOn();
+    strcpy(response, "OK");
+  }
+  else if(!strcmp(cmd,"BYPASS:OFF"))
+  {
+    TPICs_FpgaBypassOff();
+    strcpy(response, "OK");
+  }
   else if(!strcmp(cmd,"RLY:SET")){
     sscanf(request, "%s %s",cmd, arg1);
     uint16_t index = strtol(arg1, NULL, 16);
@@ -101,6 +116,7 @@ static void Parser(char *request, char *response)
     strcpy(response, "OK");
   }
 
+  //--- CSAK KIKPACSOLT FPGA BYPASBAN mükdöik ---
   else if(!strcmp(cmd,"REG?")){
 
     uint8_t buffer[FPGA_TOTAL_REGISTERS];
@@ -113,16 +129,16 @@ static void Parser(char *request, char *response)
     }
   }
 
+  //--- CSAK FPGA BYPASS módban müködik ---
   else if(!strcmp(cmd,"CHAIN:CHECK?"))
   {
-    TPICs_FpgaBypassOn();
-
     if(TPICs_ChainCheckIsPassed())
       sprintf(response, "PASSED");
     else
       sprintf(response, "FAILED");
-    TPICs_FpgaBypassOff();
   }
+
+  //--- CSAK FPGA BYPASS módban müködik ---
   else if(!strcmp(cmd,"CHAIN:SET"))
   {
     uint8_t byteArray[TPIC_COUNT];

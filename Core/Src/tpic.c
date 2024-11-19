@@ -10,6 +10,7 @@
 #include <string.h>
 
 static SPI_HandleTypeDef *_hspi;
+extern Device_t Device;
 
 /*
  *
@@ -62,11 +63,13 @@ bool TPICs_ChainCheckIsPassed(void)
 
   if(memcmp(testvector, result + TPIC_COUNT, TPIC_COUNT) == 0)
   {
+    Device.Status |= STATUS_CHAIN_PASSED;
     printf("tpic.c Loop test PASSED\r\n");
     return true;
   }
   else
   {
+    Device.Status &= ~STATUS_CHAIN_PASSED;
     printf("tpic.c Loop test FAILED\r\n");
     return false;
   }
@@ -135,6 +138,9 @@ void ArrayToolsU8ClrBit(const uint16_t index, void * array)
 
 void TPICs_FpgaBypassOn(void)
 {
+
+  Device.Status |= STATUS_FPGA_BYPASS;
+
   //FPGA SPI bypass ON
   HAL_GPIO_WritePin(DAIG_BYPS_GPIO_Port, DAIG_BYPS_Pin, GPIO_PIN_SET);
 
@@ -144,6 +150,9 @@ void TPICs_FpgaBypassOn(void)
 
 void TPICs_FpgaBypassOff(void)
 {
+
+  Device.Status &= ~STATUS_FPGA_BYPASS;
+
   //FPGA SPI bypass OFF
   HAL_GPIO_WritePin(DAIG_BYPS_GPIO_Port, DAIG_BYPS_Pin, GPIO_PIN_RESET);
 
