@@ -253,7 +253,7 @@ int main(void)
       double lsb = 2 * (2.048 / 262144);
       int32_t adc = MCP3421_GetValue_Blocking(MCP3421_RES_18 | MCP3421_PGA_1x);
       double volts = lsb * adc;
-      double ohms = volts / 0.0057;
+      Device.Measured.Ohms = volts / 0.0057;
       timestamp = HAL_GetTick();
 
       DisplaySetCursor(1, 8);
@@ -261,11 +261,10 @@ int main(void)
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
 
       DisplaySetCursor(1, 16);
-      sprintf(string,"R:%0.2fOHM", ohms);
+      sprintf(string,"R:%0.2fOHM", Device.Measured.Ohms);
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
 
       DisplayUpdate();
-
     }
 
 

@@ -49,6 +49,12 @@ typedef struct _Devic_t
   uint32_t Status;
   uint8_t DO;
   uint8_t DI;
+  struct
+  {
+    double Ohms;
+
+  }Measured;
+
   struct _Diag
   {
     uint32_t LcdTimeout;

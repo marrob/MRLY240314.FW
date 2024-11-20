@@ -151,6 +151,11 @@ static void Parser(char *request, char *response)
     strcpy(response, "OK");
   }
 
+  else if(!strcmp(cmd,"OHMS?"))
+  {
+    sprintf(response, "%f", Device.Measured.Ohms);
+  }
+
   else{
     Device.Diag.UartUnknwonCnt++;
   }
