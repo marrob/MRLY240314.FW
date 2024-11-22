@@ -15,8 +15,10 @@
 
 #define MCP3421_DRY           0x80
 
-#define MCP3421_MODE_CONT     0x00 //Continuous (Default)
-#define MCP3421_MODE_ONESHOT  0x80 //One-Shot -> Initiate a new conversion
+#define MCP3421_MODE_CONT     0x10 //Continuous (Default)
+#define MCP3421_MODE_ONESHOT  0x80 //One-Shot módban, 1-et kell irni, ami az új mérés inditását jelzi.
+                                   //Continous módban nincs értelme irni.
+                                   //Olvasáskor ha nulla akkor frissült mérés
 
 #define MCP3421_RES_12        0x00 //240    SPS (Default)
 #define MCP3421_RES_14        0x04 //60     SPS
@@ -33,7 +35,11 @@
 /* Public typedef ------------------------------------------------------------*/
 /* Public functions ----------------------------------------------------------*/
 uint8_t MCP3421_Init(I2C_HandleTypeDef *i2c, uint8_t address);
-int32_t MCP3421_GetValue_Blocking(uint8_t config);
+int32_t MCP3421_Blocking_GetValue(uint8_t config);
+
+void MCP3421_NonBlocking_Start(uint8_t config);
+int32_t MCP3421_NonBlocking_GetVale(void);
+
 #endif //_MCP3421__H_
 /******************* (C) COPYRIGHT 2011 marrob Design *****END OF FILE******/
 

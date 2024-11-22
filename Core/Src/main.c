@@ -167,8 +167,7 @@ int main(void)
   DisplayDrawString(DEVICE_NAME, &GfxFont7x8, SSD1306_WHITE );
   DisplayUpdate();
 
-  // --- ADC ---
-  MCP3421_Init(&hi2c2, MCP3421_I2C_DEVICE_ADDRESS);
+
 
   //--- Communication ---
   UartCom_Init(&huart1, &hdma_usart1_rx);
@@ -197,37 +196,18 @@ int main(void)
     Led5On();
   }
   HAL_Delay(2000);
-
-
-  //TPICs_TestPattern_1();
-  TPICs_Set(431);
-  TPICs_Set(430);
-  TPICs_Set(429);
-  TPICs_Set(428);
-
-  TPICs_Clr(431);
-  TPICs_Clr(430);
-  TPICs_Clr(429);
-  TPICs_Clr(428);
-  */
+*/
 
   // --- FPGA ---
  FPGA_Init(&hspi2);
 
   TPICs_FpgaBypassOff();
 
-  /*
-#ifdef DEBUG
-  printf(VT100_ATTR_RED);
-  DeviceUsrLog("This is a DEBUG version.\n");
-  printf(VT100_ATTR_RESET);
-#endif
 
 
-  DeviceUsrLog("Manufacturer:%s, Version:%04X",DEVICE_MNF, DEVICE_FW);
-*/
-
-
+  // --- ADC ---
+  MCP3421_Init(&hi2c2, MCP3421_I2C_DEVICE_ADDRESS);
+  MCP3421_NonBlocking_Start(MCP3421_RES_14 | MCP3421_PGA_1x);
 
 
   /* USER CODE END 2 */
@@ -240,24 +220,27 @@ int main(void)
     LiveLedTask(&hLiveLed);
     char string[50];
 
-    if(HAL_GetTick() - timestamp > 250)
+    if(HAL_GetTick() - timestamp > 10)
     {
       timestamp = HAL_GetTick();
 
+      /*
       DisplayClear();
 
       DisplaySetCursor(1, 0);
       sprintf(string, "UT:%lu BU:%lu", Device.Diag.UpTimeSec, Device.Diag.BootupCnt);
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
+      */
 
-      double lsb = 2 * (2.048 / 262144);
-      int32_t adc = MCP3421_GetValue_Blocking(MCP3421_RES_18 | MCP3421_PGA_1x);
-      double volts = lsb * adc;
-      Device.Measured.Ohms = volts / 0.0057;
+      double lsb = 2 * (2.048 / 16384);
+      int32_t adc = MCP3421_NonBlocking_GetVale();
+      Device.Measured.Volts = lsb * adc;
+      Device.Measured.Ohms =  Device.Measured.Volts / 0.0057;
       timestamp = HAL_GetTick();
 
+      /*
       DisplaySetCursor(1, 8);
-      sprintf(string,"Volts:%0.5f", volts);
+      sprintf(string,"Volts:%0.5f", Device.Measured.Volts);
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
 
       DisplaySetCursor(1, 16);
@@ -265,6 +248,7 @@ int main(void)
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
 
       DisplayUpdate();
+      */
     }
 
 
@@ -550,6 +534,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, ADC_SYNC_Pin|DAIG_BYPS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED5_Pin|LED6_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
@@ -558,11 +545,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LIVE_LED_Pin|DAIG_RESET_Pin|DIAG_RCK_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DAIG_BYPS_GPIO_Port, DAIG_BYPS_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : LED5_Pin LED6_Pin DAIG_BYPS_Pin */
-  GPIO_InitStruct.Pin = LED5_Pin|LED6_Pin|DAIG_BYPS_Pin;
+  /*Configure GPIO pins : ADC_SYNC_Pin LED5_Pin LED6_Pin DAIG_BYPS_Pin */
+  GPIO_InitStruct.Pin = ADC_SYNC_Pin|LED5_Pin|LED6_Pin|DAIG_BYPS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -595,6 +579,8 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+
 /* Tools----------------------------------------------------------------------*/
 void UpTimeTask(void)
 {

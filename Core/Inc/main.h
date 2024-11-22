@@ -35,8 +35,6 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-
-
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
@@ -49,11 +47,14 @@ typedef struct _Devic_t
   uint32_t Status;
   uint8_t DO;
   uint8_t DI;
+
   struct
   {
+    double Volts;
     double Ohms;
 
   }Measured;
+
 
   struct _Diag
   {
@@ -76,32 +77,6 @@ typedef struct _Devic_t
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define DEVICE_DEBUG_LEVEL    3
-
-#if (DEVICE_DEBUG_LEVEL > 0)
-#define  DeviceUsrLog(...)  {printf(__VA_ARGS__);\
-                             printf("\r\n");}
-#else
-#define DeviceUsrLog(...)
-#endif
-
-#if (DEVICE_DEBUG_LEVEL > 1)
-
-#define  DeviceErrLog(...)  {printf("ERROR.DEVICE:") ;\
-                             printf(__VA_ARGS__);\
-                             printf("\r\n");}
-#else
-#define DeviceErrLog(...)
-#endif
-
-#if (DEVICE_DEBUG_LEVEL > 2)
-#define  DeviceDbgLog(...)  {printf("DEBUG.DEVICE:") ;\
-                             printf(__VA_ARGS__);\
-                             printf("\r\n");}
-#else
-#define DeviceDbgLog(...)
-#endif
-
 
 #define DEVICE_NAME             "MRLY240314.FW"
 #define DEVICE_NAME_SIZE        sizeof(DEVICE_NAME)
@@ -139,6 +114,8 @@ void Error_Handler(void);
 void UartCom_Init(UART_HandleTypeDef *uart, DMA_HandleTypeDef *dma);
 void UartCom_Task(void);
 
+//--- Measurements ---
+//double ResMeas(void);
 
 
 // --- TPIC Relay drivers  ---
@@ -160,6 +137,8 @@ void FPGA_ReadReg(uint8_t *buffer, size_t size);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ADC_SYNC_Pin GPIO_PIN_3
+#define ADC_SYNC_GPIO_Port GPIOA
 #define LED5_Pin GPIO_PIN_6
 #define LED5_GPIO_Port GPIOA
 #define LED6_Pin GPIO_PIN_7

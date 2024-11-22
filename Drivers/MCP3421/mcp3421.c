@@ -12,6 +12,8 @@
 static uint8_t WriteConfig(uint8_t config);
 static I2C_HandleTypeDef *_i2c;
 static uint8_t _devAddress = 0;
+static uint32_t poll_cnt = 0;
+static uint8_t _config = 0;
 
 uint8_t MCP3421_Init(I2C_HandleTypeDef *i2c, uint8_t address)
 { 
@@ -22,6 +24,7 @@ uint8_t MCP3421_Init(I2C_HandleTypeDef *i2c, uint8_t address)
 
 static uint8_t WriteConfig(uint8_t config)
 {
+  _config = config;
   uint8_t data[] = { config };
   if(HAL_I2C_Master_Transmit(_i2c, _devAddress, data, sizeof(data), 100) == HAL_OK)
     return MCP3421_OK;
@@ -30,15 +33,140 @@ static uint8_t WriteConfig(uint8_t config)
 }
 
 
-int32_t MCP3421_GetValue_Blocking(uint8_t config)
+void MCP3421_NonBlocking_Start(uint8_t config)
 {
-  uint32_t poll_cnt = 0;
+   WriteConfig(MCP3421_MODE_CONT | config);
+}
+
+/*
+ * A Ready Bitnek NonBlockin/Continous módban nincs jelentősége
+ *
+ */
+int32_t MCP3421_NonBlocking_GetVale(void)
+{
+  //uint32_t poll_cnt = 0;
+  uint8_t data[4]= { 0 };
+  uint32_t result = 0;
+  poll_cnt = 0;
+
+  HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+  do
+  {
+    if((_config & MCP3421_RES_MASK) == MCP3421_RES_18)
+    {
+      HAL_I2C_Master_Receive(_i2c, _devAddress, data, 4, 100);
+
+      //18-bit resolution
+      //3.75SPS
+      if((data[3] & MCP3421_DRY) == 0x00)
+      {
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+
+        result = ((data[0] & 0x03) <<16 ); //MSB
+        result |= (data[1] << 8);
+        result |= (data[2] << 0);
+
+        //18.bit sign bit check
+        if(result & 0x20000)
+        {//Negative
+          result |= 0xFFFE0000;
+          result = ~result;
+          result = -1 * result;
+        }
+        break;
+      }
+    }
+
+    //16-bit resolution
+    //15SPS
+    else if((_config & MCP3421_RES_MASK) == MCP3421_RES_16)
+    {
+      HAL_I2C_Master_Receive(_i2c, _devAddress, data, 3, 100);
+      if((data[2] & 0x80) == 0x00)
+      {
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+
+        result = (data[0]<<8); //MSB
+        result |= (data[1]<<0);
+
+        if(result & 0x8000)
+        {
+          result |= 0xFFFF8000;
+          result = ~result;
+          result = -1 * result;
+        }
+        break;
+      }
+    }
+
+    //14-bit resolution
+    //60SPS
+    else if((_config & MCP3421_RES_MASK) == MCP3421_RES_14)
+    {
+      HAL_I2C_Master_Receive(_i2c, _devAddress, data, 3, 100);
+      if((data[2] & 0x80) == 0x00)
+      {
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+
+        result = (data[0]<<8); //MSB
+        result |= (data[1]<<0);
+
+        if(result & 0x4000)
+        {
+          result |= 0xFFFFC000;
+          result = ~result;
+          result = -1 * result;
+        }
+        break;
+      }
+    }
+
+    //12-bit resolution
+    //240SPS
+    else if((_config & MCP3421_RES_MASK) == MCP3421_RES_12)
+    {
+      HAL_I2C_Master_Receive(_i2c, _devAddress, data, 3, 100);
+      if((data[2] & 0x80) == 0x00)
+      {
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+
+        result = (data[0]<<8); //MSB
+        result |= (data[1]<<0);
+
+        if(result & 0x1000)
+        {
+          result |= 0xFFFFF000;
+          result = ~result;
+          result = -1 * result;
+        }
+        break;
+      }
+    }
+
+    poll_cnt++;
+
+  }while(1);
+
+  return result;
+}
+
+
+
+/*
+ * Ha túl korán kérem le a következő értéket, akkor az ADC 0-ás tömbbel tér vissza, ami a mérést végét jelzi
+ * - 18 bites módban két mérés inditása között legalább 200ms-et kell várni, de új eredményt csak 1SPS gyakorisággal érkezik
+ */
+int32_t MCP3421_Blocking_GetValue(uint8_t config)
+{
+  //uint32_t poll_cnt = 0;
   uint8_t data[4]= { 0 };
   //S|Control|W|SlaveACK|BYTE|SlaveACK|BYTE|SlaveACK|....|ST|
-  uint32_t result = 0;
+  int32_t result = 0;
+  poll_cnt = 0;
   //Initate New Conversion
   //Beallitom 1-be RDY-t
   WriteConfig(MCP3421_MODE_ONESHOT | config);
+  HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
   do
   {
 
@@ -57,7 +185,7 @@ int32_t MCP3421_GetValue_Blocking(uint8_t config)
       //Tx:  S
       if((data[3] & MCP3421_DRY) == 0x00)
       {
-        //HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
 
         result = ((data[0] & 0x03) <<16 ); //MSB
         result |= (data[1] << 8);
@@ -83,7 +211,7 @@ int32_t MCP3421_GetValue_Blocking(uint8_t config)
       //Tx:  S
       if((data[2] & 0x80) == 0x00)
       {
-        //HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
 
         result = (data[0]<<8); //MSB
         result |= (data[1]<<0);
@@ -107,7 +235,7 @@ int32_t MCP3421_GetValue_Blocking(uint8_t config)
       //Tx:  S
       if((data[2] & 0x80) == 0x00)
       {
-        //HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
 
         result = (data[0]<<8); //MSB
         result |= (data[1]<<0);
@@ -132,7 +260,7 @@ int32_t MCP3421_GetValue_Blocking(uint8_t config)
       //Tx:  S
       if((data[2] & 0x80) == 0x00)
       {
-        //HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
+        HAL_GPIO_TogglePin(ADC_SYNC_GPIO_Port, ADC_SYNC_Pin);
 
         result = (data[0]<<8); //MSB
         result |= (data[1]<<0);

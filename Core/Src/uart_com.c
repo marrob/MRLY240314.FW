@@ -153,6 +153,9 @@ static void Parser(char *request, char *response)
 
   else if(!strcmp(cmd,"OHMS?"))
   {
+
+    //double ohms = ResMeas();
+
     sprintf(response, "%f", Device.Measured.Ohms);
   }
 
