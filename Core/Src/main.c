@@ -180,7 +180,7 @@ int main(void)
   DisplayClear();
   DisplayUpdate();
 
-  /*
+
   if(TPICs_ChainCheckIsPassed() == false)
   {
     DisplaySetCursor(0, 0);
@@ -196,10 +196,10 @@ int main(void)
     Led5On();
   }
   HAL_Delay(2000);
-*/
+
 
   // --- FPGA ---
- FPGA_Init(&hspi2);
+  FPGA_Init(&hspi2);
 
   TPICs_FpgaBypassOff();
 
@@ -224,13 +224,12 @@ int main(void)
     {
       timestamp = HAL_GetTick();
 
-      /*
+
       DisplayClear();
 
       DisplaySetCursor(1, 0);
       sprintf(string, "UT:%lu BU:%lu", Device.Diag.UpTimeSec, Device.Diag.BootupCnt);
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
-      */
 
       double lsb = 2 * (2.048 / 16384);
       int32_t adc = MCP3421_NonBlocking_GetVale();
@@ -238,7 +237,7 @@ int main(void)
       Device.Measured.Ohms =  Device.Measured.Volts / 0.0057;
       timestamp = HAL_GetTick();
 
-      /*
+
       DisplaySetCursor(1, 8);
       sprintf(string,"Volts:%0.5f", Device.Measured.Volts);
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
@@ -248,7 +247,7 @@ int main(void)
       DisplayDrawString(string, &GfxFont7x8, SSD1306_WHITE );
 
       DisplayUpdate();
-      */
+
     }
 
 
